@@ -51,5 +51,30 @@ php -S localhost:5050
 ```
 The admin panel will be accessible at http://localhost:5050/.
 
+## Program Snapshots
+Below are snapshots of the Exit Survey Program showcasing the Student and Admin modules:
+
+**Student Login Page**
+![Student Login](snapshots/student-login.png)
+
+**Student Home Page**
+![Student Home](snapshots/student-home.png)
+
+**Admin Login Page**
+![Admin Login](snapshots/admin-login.png)
+
+**Admin Home Page**
+![Admin Home](snapshots/admin-home.png)
+
+## Contributors
+The following individuals contributed to the development of the Exit Survey Program:
+
+- **Matt Danielle Bravo**
+- **[Neil Angelo Briones](https://www.linkedin.com/in/neil-briones/)**
+- **[Rouxvick Dictag](https://www.linkedin.com/in/rouxvick-dictag-79b6bb346/)**
+- **Milton Junsel Fabe**
+- **[Anthony Llena](https://www.linkedin.com/in/anthony-llena-031026182/)**
+- **[Hans Elijah Viduya](https://www.linkedin.com/in/hanselijahv/)** 
+
 
 
