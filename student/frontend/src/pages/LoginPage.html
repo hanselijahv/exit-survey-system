@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TheScript - Login Page</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link href="../../public/css/output.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="hero min-h-screen flex justify-center items-center">
+        <label class="swap swap-rotate absolute top-4 right-4">
+            <input type="checkbox" value="corporate" class="theme-controller" />
+            <span class="swap-off icon-[tabler--sun] size-6"></span>
+            <span class="swap-on icon-[tabler--moon] size-6"></span>
+        </label>
+        <div class="card lg:card-side bg-base-100 shadow-xl">
+            <figure>
+                <img style="width: 100%; height: 450px; object-fit: cover;" src="../assets/img/login_img.png"
+                    alt="Album" />
+            </figure>
+            <form class="card-body">
+                <div class="form-group">
+                    <h1 class="text-4xl font-bold">Login</h1>
+                    <h1 class="italic text-md font-bold mt-6">Welcome to TheScript</h1>
+                </div>
+
+                <div class="form-control w-96 mt-6">
+                    <label for="email">
+                        <span class="label-text-sm">Email</span>
+                    </label>
+                    <input id="email" type="email" placeholder="Email" class="input input-bordered mt-2" required />
+                </div>
+                <div class="form-control w-96 mt-4">
+                    <label for="password">
+                        <span class="label-text-sm">Password</span>
+                    </label>
+                    <div class="input-group mt-2">
+                        <input id="password" type="password" class="input input-bordered" placeholder="Enter password"
+                            value="" />
+                        <button type="button" data-toggle-password='{ "target": "#password" }'
+                            class="input-group-text block" aria-label="password toggle">
+                            <span
+                                class="icon-[tabler--eye] text-base-content/80 password-active:block hidden size-5 flex-shrink-0"></span>
+                            <span
+                                class="icon-[tabler--eye-off] text-base-content/80 password-active:hidden block size-5 flex-shrink-0"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-control mt-6">
+                    <button class="btn btn-lg max-sm:btn-sm lg:btn-lg" id="loginButton">Login</button>
+                </div>
+                <div id="timerContainer" class="mt-4 w-96 text-red-500 hidden">
+                    <p>You have been temporarily locked out. Please try again in <span id="timer">30</span> seconds.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const themeController = document.querySelector('.theme-controller');
+
+            function applyTheme(theme) {
+                if (theme === 'corporate') {
+                    document.documentElement.classList.add('corporate'); // Apply corporate theme class
+                } else {
+                    document.documentElement.classList.remove('corporate'); // Default theme
+                }
+            }
+
+            // Load theme from localStorage and apply it
+            const storedTheme = localStorage.getItem('theme') || 'default';
+            applyTheme(storedTheme);
+
+            // Set the checkbox state based on the stored theme
+            if (themeController) {
+                themeController.checked = storedTheme === 'corporate';
+            }
+
+            // Theme toggle event listener
+            if (themeController) {
+                themeController.addEventListener('change', function () {
+                    const newTheme = themeController.checked ? 'corporate' : 'default';
+                    localStorage.setItem('theme', newTheme); // Save theme to localStorage
+                    applyTheme(newTheme);
+                });
+            }
+
+            const loginForm = document.querySelector('form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginButton = document.getElementById('loginButton');
+            const timerContainer = document.getElementById('timerContainer');
+            const timerDisplay = document.getElementById('timer');
+            const notyf = new Notyf({
+                duration: 3000,
+                position: {
+                    x: 'center',
+                    y: 'top',
+                },
+                dismissible: true,
+            });
+
+            loginForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const email = emailInput.value;
+                const password = passwordInput.value;
+
+                fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message === 'Login successful') {
+                            window.location.href = '/home';
+                        } else if (data.lockoutTimeRemaining) {
+                            // Lockout response, show the timer
+                            let remainingTime = data.lockoutTimeRemaining;
+                            timerContainer.classList.remove('hidden');
+                            timerDisplay.textContent = remainingTime;
+
+                            let timerInterval = setInterval(() => {
+                                remainingTime--;
+                                timerDisplay.textContent = remainingTime;
+                                if (remainingTime <= 0) {
+                                    clearInterval(timerInterval);
+                                    loginButton.disabled = false;
+                                    timerContainer.classList.add('hidden');
+                                }
+                            }, 1000);
+                        } else {
+                            // Trigger the error toast for invalid credentials
+                            notyf.error(data.message || 'Login failed, please try again.');
+                            emailInput.value = '';
+                            passwordInput.value = '';
+                        }
+                    })
+                    .catch(() => {
+                        notyf.error('Network error. Please try again later.');
+                    });
+            });
+        });
+    </script>
+    <script src="../../node_modules/flyonui/flyonui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+</body>
+
+</html>

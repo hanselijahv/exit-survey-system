@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheScript - History Page</title>
+    <link href="../../public/css/output.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+</head>
+
+<body class="flex flex-col">
+<nav class="navbar rounded-box flex w-full gap-2 shadow max-md:flex-col md:items-center">
+    <div class="flex w-full items-center justify-between">
+        <div class="navbar-start items-center justify-between max-md:w-full">
+            <a class="link text-base-content/90 link-neutral text-xl font-semibold no-underline" href="/home">
+                TheScript
+            </a>
+            <div class="md:hidden">
+                <button type="button" class="collapse-toggle btn btn-outline btn-secondary btn-sm btn-square"
+                        aria-controls="default-navbar-collapse" aria-label="Toggle navigation">
+                    <span class="icon-[tabler--menu-2] collapse-open:hidden size-4"></span>
+                    <span class="icon-[tabler--x] collapse-open:block hidden size-4"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="default-navbar-collapse"
+         class="md:navbar-end collapse hidden grow basis-full overflow-hidden transition-[height] duration-300 max-md:w-full">
+        <ul class="menu md:menu-horizontal gap-2 p-0 text-base items-center">
+            <li><a href="/home">Home</a></li>
+            <li><a href="/surveys">Surveys</a></li>
+            <li><a href="/history">History</a></li>
+            <li>
+                <label class="swap swap-rotate w-full">
+                    <input type="checkbox" value="corporate" class="theme-controller"/>
+                    <span class="swap-off icon-[tabler--sun] size-6"></span>
+                    <span class="swap-on icon-[tabler--moon] size-6"></span>
+                </label>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="card w-4/5 mx-auto mt-4">
+    <h1 class="text-3xl text-center font-semibold mb-4">Accomplished Surveys</h1>
+    <div class="w-full rounded-lg pb-2">
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                <tr class="bg-base-300 border-0">
+                    <th class="rounded-s-lg">Survey #</th>
+                    <th>Survey Name</th>
+                    <th>Academic Year</th>
+                    <th class="rounded-e-lg"></th>
+                </tr>
+                </thead>
+                <tbody id="survey-table-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- Responses Section -->
+<div id="responses-section" class="hidden card w-4/5 mx-auto mt-4 p-4 border">
+    <h1 class="text-3xl text-center font-semibold mb-4">Survey Responses</h1>
+    <div id="responses-container">
+        <!-- Responses will be populated here -->
+    </div>
+    <div class="text-center">
+        <button type="button" class="btn btn-secondary mt-4" id="back-to-surveys">Back to Surveys</button>
+    </div>
+</div>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchSurveys();
+        setInterval(fetchSurveys, 5000);
+
+        const themeController = document.querySelector('.theme-controller');
+
+        function applyTheme(theme) {
+            if (theme === 'corporate') {
+                document.documentElement.classList.add('corporate'); // Apply corporate theme class
+            } else {
+                document.documentElement.classList.remove('corporate'); // Default theme
+            }
+        }
+
+        // Load theme from localStorage and apply it
+        const storedTheme = localStorage.getItem('theme') || 'default';
+        applyTheme(storedTheme);
+
+        // Set the checkbox state based on the stored theme
+        if (themeController) {
+            themeController.checked = storedTheme === 'corporate';
+        }
+
+        // Theme toggle event listener
+        if (themeController) {
+            themeController.addEventListener('change', function () {
+                const newTheme = themeController.checked ? 'corporate' : 'default';
+                localStorage.setItem('theme', newTheme); // Save theme to localStorage
+                applyTheme(newTheme);
+            });
+        }
+    });
+
+    function fetchSurveys() {
+        fetch('/api/surveys/accomplished')
+            .then(response => response.json())
+            .then(data => {
+                const surveys = data.surveys || [];
+                const tableBody = document.getElementById('survey-table-body');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                if (surveys.length === 0) {
+                    const noDataRow = document.createElement('tr');
+                    noDataRow.innerHTML = '<td colspan="3" class="text-center">No surveys available</td>';
+                    tableBody.appendChild(noDataRow);
+                } else {
+                    surveys.forEach((survey, index) => {
+                        const row = createSurveyRow(survey, index);
+                        tableBody.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching surveys:', error);
+            });
+    }
+
+    function viewResponses(surveyId) {
+        fetch(`/api/surveys/${surveyId}/responses`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('API Response Data:', data);
+                document.getElementById('responses-section');
+                const responsesContainer = document.getElementById('responses-container');
+                responsesContainer.innerHTML = '';
+
+                if (data && data.questions && data.questions.length > 0) {
+                    data.questions.forEach(question => {
+                        const questionResponses = question.responses || [];
+                        questionResponses.forEach((response) => {
+                            const responseItem = document.createElement('div');
+                            responseItem.classList.add('card', 'w-full', 'mb-4');
+
+                            let answerText = '';
+
+                            if (question.question_type === 'multiple_choice' || question.question_type === 'relevance' ||
+                                question.question_type === 'satisfaction' || question.question_type === 'quality') {
+                                answerText = response.answer || 'No answer provided';
+                            } else if (question.question_type === 'short_answer') {
+                                answerText = response.answer || 'No answer provided';
+                            }
+
+                            responseItem.innerHTML = `
+                            <p class="font-semibold text-lg mt-4 mx-4">Question: ${question.question}</p>
+                            <p class="mt-2 text-sm mb-4 mx-4">Answer: ${answerText}</p>
+                            <!-- - <p class="mt-4 text-sm mb-4 mx-4">User: ${response.user}</p> -->
+                        `;
+
+                            responsesContainer.appendChild(responseItem);
+                        });
+                    });
+                } else {
+                    responsesContainer.innerHTML = '<p class="text-center">No responses available for this survey.</p>';
+                }
+
+                document.getElementById('responses-section').classList.remove('hidden');
+                document.querySelector('.card').classList.add('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching responses:', error);
+                alert('Failed to fetch responses. Please try again.');
+            });
+    }
+
+    document.getElementById('back-to-surveys').addEventListener('click', function () {
+        document.getElementById('responses-section').classList.add('hidden');
+        document.querySelector('.card').classList.remove('hidden');
+    });
+
+    function createSurveyRow(survey, index) {
+        const row = document.createElement('tr');
+        row.classList.add('hover');
+        row.dataset.surveyId = survey.survey_id;
+        row.innerHTML = `
+            <td class="text-nowrap">${index + 1}</td>
+            <td class="text-nowrap">${survey.survey_name}</td>
+            <td class="text-nowrap">${survey.academic_year}</td>
+            <td>
+                <button type="button" class="btn btn-primary btn-sm view-responses-btn" data-survey-id="${survey.survey_id}">
+                    View Responses
+                </button>
+            </td>
+        `;
+
+
+        const viewResponsesButton = row.querySelector('.view-responses-btn');
+        viewResponsesButton.addEventListener('click', function () {
+            event.stopPropagation();
+            const surveyId = this.dataset.surveyId;
+            viewResponses(surveyId);
+        });
+
+        return row;
+    }
+
+</script>
+<script src="../../node_modules/flyonui/flyonui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+</body>
+
+</html>

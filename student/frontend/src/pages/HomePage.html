@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TheScript - Home Page </title>
+    <link href="../../public/css/output.css" rel="stylesheet">
+</head>
+
+<body class="flex flex-col">
+<nav class="navbar rounded-box flex w-full gap-2 shadow max-md:flex-col md:items-center">
+    <div class="flex w-full items-center justify-between">
+        <div class="navbar-start items-center justify-between max-md:w-full">
+            <a class="link text-base-content/90 link-neutral text-xl font-semibold no-underline" href="/home">
+                TheScript
+            </a>
+            <div class="md:hidden">
+                <button type="button" class="collapse-toggle btn btn-outline btn-secondary btn-sm btn-square"
+                        aria-controls="default-navbar-collapse" aria-label="Toggle navigation">
+                    <span class="icon-[tabler--menu-2] collapse-open:hidden size-4"></span>
+                    <span class="icon-[tabler--x] collapse-open:block hidden size-4"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="default-navbar-collapse"
+         class="md:navbar-end collapse hidden grow basis-full overflow-hidden transition-[height] duration-300 max-md:w-full">
+        <ul class="menu md:menu-horizontal gap-2 p-0 text-base items-center">
+            <li><a href="/home">Home</a></li>
+            <li><a href="/surveys">Surveys</a></li>
+            <li><a href="/history">History</a></li>
+            <li>
+                <label class="swap swap-rotate w-full">
+                    <input type="checkbox" value="corporate" class="theme-controller"/>
+                    <span class="swap-off icon-[tabler--sun] size-6"></span>
+                    <span class="swap-on icon-[tabler--moon] size-6"></span>
+                </label>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="card shadow p-4 mt-20">
+    <div class="card-body mt-10 mb-6 max-w-screen-lg mx-auto">
+        <h5 class="card-title text-xl font-semibold mb-4">Hello <em><span id="username-placeholder" class="text-primary">[Username]</span></em>,
+            welcome to TheScript</h5>
+        <p class="mt-4 text-sm">Bridging the Past with Tomorrow's Leaders</p>
+
+        <div class="mt-6 text-center">
+            <a href="/surveys" class="btn btn-gradient btn-primary mt-4">Explore Surveys</a>
+            <button id='logout' class="btn btn-outline btn-secondary mt-4">Logout</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch user data
+        fetch('/api/auth/getName')
+            .then(response => response.json())
+            .then(data => {
+                if (data.fullName) {
+                    const usernameElement = document.getElementById('username-placeholder');
+                    if (usernameElement) {
+                        usernameElement.textContent = data.fullName;
+                    }
+                } else {
+                    console.error('Failed to fetch the full name:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+            });
+
+        const themeController = document.querySelector('.theme-controller');
+
+        function applyTheme(theme) {
+            if (theme === 'corporate') {
+                document.documentElement.classList.add('corporate'); // Apply corporate theme class
+            } else {
+                document.documentElement.classList.remove('corporate'); // Default theme
+            }
+        }
+
+        // Load theme from localStorage and apply it
+        const storedTheme = localStorage.getItem('theme') || 'default';
+        applyTheme(storedTheme);
+
+        // Set the checkbox state based on the stored theme
+        if (themeController) {
+            themeController.checked = storedTheme === 'corporate';
+        }
+
+        // Theme toggle event listener
+        if (themeController) {
+            themeController.addEventListener('change', function () {
+                const newTheme = themeController.checked ? 'corporate' : 'default';
+                localStorage.setItem('theme', newTheme); // Save theme to localStorage
+                applyTheme(newTheme);
+            });
+        }
+
+        // Navbar toggle
+        const collapseButton = document.querySelector('.collapse-toggle');
+        const collapseMenu = document.querySelector('#default-navbar-collapse');
+
+        collapseButton.addEventListener('click', function () {
+            collapseMenu.classList.toggle('hidden');
+        });
+
+        // Logout functionality
+        const logoutButton = document.getElementById('logout');
+        logoutButton.addEventListener('click', function () {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include', // To include session cookies
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Redirect to login page after logout
+                        window.location.href = '/';
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.message || 'Logout failed');
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                    alert('Failed to log out. Please try again.');
+                });
+        });
+    });
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheScript - Surveys Page</title>
+    <link href="../../public/css/output.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+</head>
+
+<body class="flex flex-col">
+<nav class="navbar rounded-box flex w-full gap-2 shadow max-md:flex-col md:items-center">
+    <div class="flex w-full items-center justify-between">
+        <div class="navbar-start items-center justify-between max-md:w-full">
+            <a class="link text-base-content/90 link-neutral text-xl font-semibold no-underline" href="/home">
+                TheScript
+            </a>
+            <div class="md:hidden">
+                <button type="button" class="collapse-toggle btn btn-outline btn-secondary btn-sm btn-square"
+                        aria-controls="default-navbar-collapse" aria-label="Toggle navigation">
+                    <span class="icon-[tabler--menu-2] collapse-open:hidden size-4"></span>
+                    <span class="icon-[tabler--x] collapse-open:block hidden size-4"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="default-navbar-collapse"
+         class="md:navbar-end collapse hidden grow basis-full overflow-hidden transition-[height] duration-300 max-md:w-full">
+        <ul class="menu md:menu-horizontal gap-2 p-0 text-base items-center">
+            <li><a href="/home">Home</a></li>
+            <li><a href="/surveys">Surveys</a></li>
+            <li><a href="/history">History</a></li>
+            <li>
+                <label class="swap swap-rotate w-full">
+                    <input type="checkbox" value="corporate" class="theme-controller"/>
+                    <span class="swap-off icon-[tabler--sun] size-6"></span>
+                    <span class="swap-on icon-[tabler--moon] size-6"></span>
+                </label>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+<div class="card w-4/5 mx-auto mt-4">
+    <h1 class="text-3xl text-center font-semibold mb-4"> Available Surveys</h1>
+    <div class="w-full rounded-lg pb-2">
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                <tr class="bg-base-300 border-0">
+                    <th class="rounded-s-lg">Survey #</th>
+                    <th>Survey Name</th>
+                    <th class="rounded-e-lg">Academic Year</th>
+                </tr>
+                </thead>
+                <tbody id="survey-table-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Survey Questions -->
+<div id="middle-center-modal" class="overlay modal overlay-open:opacity-100 modal-middle hidden" role="dialog"
+     tabindex="-1">
+    <div class="modal-dialog overlay-open:opacity-100">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Survey Questions</h3>
+                <button type="button" class="btn btn-text btn-circle btn-sm absolute end-3 top-3" aria-label="Close"
+                        id="close-modal" data-overlay="#middle-center-modal">
+                    <span class="icon-[tabler--x] size-4"></span>
+                </button>
+            </div>
+            <div class="modal-body grow">
+                <div id="question-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-soft btn-secondary" id="close-modal-footer">Back</button>
+                <button type="button" class="btn btn-primary" id="next-btn" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Responses Section -->
+<div id="responses-section" class="hidden card w-4/5 mx-auto mt-4 p-4 border">
+    <h1 class="text-3xl text-center font-semibold mb-4">Survey Responses</h1>
+    <div id="responses-container">
+        <!-- Responses will be populated here -->
+    </div>
+    <div class="text-center">
+        <button type="button" class="btn btn-secondary mt-4" id="back-to-surveys">Back to Surveys</button>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+<script>
+    let currentQuestionIndex = 0;
+    let surveyQuestions = [];
+    let selectedChoices = {};
+
+    let notyf = new Notyf({
+        duration: 3000,
+        position: {
+            x: 'center',
+            y: 'top',
+        },
+        dismissible: true,
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchSurveys();
+        setInterval(fetchSurveys, 1000);
+
+        const themeController = document.querySelector('.theme-controller');
+
+        function applyTheme(theme) {
+            if (theme === 'corporate') {
+                document.documentElement.classList.add('corporate'); // Apply corporate theme class
+            } else {
+                document.documentElement.classList.remove('corporate'); // Default theme
+            }
+        }
+
+        // Load theme from localStorage and apply it
+        const storedTheme = localStorage.getItem('theme') || 'default';
+        applyTheme(storedTheme);
+
+        // Set the checkbox state based on the stored theme
+        if (themeController) {
+            themeController.checked = storedTheme === 'corporate';
+        }
+
+        // Theme toggle event listener
+        if (themeController) {
+            themeController.addEventListener('change', function () {
+                const newTheme = themeController.checked ? 'corporate' : 'default';
+                localStorage.setItem('theme', newTheme); // Save theme to localStorage
+                applyTheme(newTheme);
+            });
+        }
+    });
+
+
+    function fetchSurveys() {
+        fetch('/api/surveys')
+            .then(response => response.json())
+            .then(data => {
+                const surveys = data.surveys || [];
+                const tableBody = document.getElementById('survey-table-body');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                if (surveys.length === 0) {
+                    const noDataRow = document.createElement('tr');
+                    noDataRow.innerHTML = '<td colspan="3" class="text-center">No surveys available</td>';
+                    tableBody.appendChild(noDataRow);
+                } else {
+                    surveys.forEach((survey, index) => {
+                        const row = createSurveyRow(survey, index);
+                        tableBody.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching surveys:', error);
+            });
+    }
+
+    document.getElementById('back-to-surveys').addEventListener('click', function () {
+        document.getElementById('responses-section').classList.add('hidden');
+        document.querySelector('.card').classList.remove('hidden');
+    });
+
+    function createSurveyRow(survey, index) {
+        const row = document.createElement('tr');
+        row.classList.add('hover');
+        row.dataset.surveyId = survey.survey_id;
+        row.innerHTML = `
+            <td class="text-nowrap">${index + 1}</td>
+            <td class="text-nowrap">${survey.survey_name}</td>
+            <td class="text-nowrap">${survey.academic_year}</td>
+        `;
+
+        row.addEventListener('click', function () {
+            surveyId = this.dataset.surveyId;
+            fetchSurveyQuestions(surveyId);
+        });
+
+        return row;
+    }
+
+    function fetchSurveyQuestions(surveyId) {
+
+        fetch(`/api/surveys/${surveyId}/questions`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.questions) {
+                    surveyQuestions = data.questions;
+                    currentQuestionIndex = 0;
+                    displayQuestion();
+                    const modal = document.getElementById('middle-center-modal');
+                    HSOverlay.open(modal);
+                } else {
+                    console.error('No questions in the survey.', data.message);
+                }
+            })
+            .catch(() => {
+                notyf.error('No questions found in the survey. Please try again later.');
+            });
+    }
+
+    function displayQuestion() {
+        const questionContainer = document.getElementById('question-container');
+        const question = surveyQuestions[currentQuestionIndex];
+
+        if (question.question_type === 'multiple_choice' || question.question_type === 'relevance' ||
+            question.question_type === 'satisfaction' || question.question_type === 'quality') {
+            displayMultipleChoiceQuestion(question, questionContainer);
+        } else if (question.question_type === 'short_answer') {
+            displayShortTextQuestion(question, questionContainer);
+        }
+
+        updateNextButton();
+        validateResponses();
+    }
+
+    function displayMultipleChoiceQuestion(question, container) {
+        let choicesHTML = '';
+        question.choices.forEach(choice => {
+            const isChecked = selectedChoices[question.question_id] === choice.choice_id;
+            choicesHTML += `
+                    <label class="form-control flex items-center gap-2">
+                        <input type="radio" name="question-${question.question_id}" class="radio radio-primary" value="${choice.choice_id}"
+                            ${isChecked ? 'checked' : ''}>
+                        <span class="label cursor-pointer">
+                            <span class="label-text text-base">${choice.choice}</span>
+                        </span>
+                    </label>
+                `;
+        });
+
+        container.innerHTML = `
+                <label class="block font-semibold">${question.question}</label>
+                <div class="flex flex-col gap-2 mt-4">${choicesHTML}</div>
+            `;
+
+        const radioButtons = document.querySelectorAll(`input[name="question-${question.question_id}"]`);
+        radioButtons.forEach(button => {
+            button.addEventListener('change', function () {
+                selectedChoices[question.question_id] = parseInt(this.value);
+                validateResponses();
+            });
+        });
+    }
+
+    function displayShortTextQuestion(question, container) {
+        container.innerHTML = `
+        <label class="block font-semibold">${question.question}</label>
+        <textarea class="textarea textarea-bordered w-full mt-4" rows="3" placeholder="Your answer..." id="question-${question.question_id}">${selectedChoices[question.question_id] || ''}</textarea>
+    `;
+
+        const textArea = document.querySelector(`#question-${question.question_id}`);
+        if (textArea) {
+            textArea.addEventListener('input', function () {
+                selectedChoices[question.question_id] = this.value.trim();
+                validateResponses();
+            });
+        } else {
+            console.error(`Textarea with id question-${question.question_id} not found.`);
+        }
+    }
+
+    function validateResponses() {
+        const allAnswered = surveyQuestions.every(question => {
+            if (question.question_type === 'multiple_choice' || question.question_type === 'satisfaction' ||
+                question.question_type === 'relevance' || question.question_type === 'quality') {
+                return selectedChoices[question.question_id] !== undefined;
+            } else if (question.question_type === 'short_answer') {
+                return selectedChoices[question.question_id]?.trim() !== '';
+            }
+            return false;
+        });
+
+        const nextButton = document.getElementById('next-btn');
+        nextButton.disabled = !allAnswered && currentQuestionIndex === surveyQuestions.length - 1;
+    }
+
+    function updateNextButton() {
+        const nextButton = document.getElementById('next-btn');
+        nextButton.textContent = currentQuestionIndex < surveyQuestions.length - 1 ? 'Next' : 'Submit Survey';
+    }
+
+    document.getElementById('next-btn').addEventListener('click', function () {
+        saveResponse();
+
+        const question = surveyQuestions[currentQuestionIndex];
+        if (question.question_type === 'short_answer') {
+            document.querySelector(`#question-${question.question_id}`);
+        }
+
+        if (currentQuestionIndex < surveyQuestions.length - 1) {
+            currentQuestionIndex++;
+            displayQuestion();
+        } else {
+            submitSurvey();
+            HSOverlay.close('#middle-center-modal');
+        }
+    });
+
+    document.getElementById('close-modal-footer').addEventListener('click', function () {
+        saveResponse();
+
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            displayQuestion();
+        }
+    });
+
+    function saveResponse() {
+        const question = surveyQuestions[currentQuestionIndex];
+
+        if (question.question_type === 'multiple_choice' || question.question_type === 'satisfaction' ||
+            question.question_type === 'relevance' || question.question_type === 'quality') {
+            const selectedRadio = document.querySelector(`input[name="question-${question.question_id}"]:checked`);
+            if (selectedRadio) {
+                selectedChoices[question.question_id] = parseInt(selectedRadio.value);
+            }
+        } else if (question.question_type === 'short_answer') {
+            const shortTextElement = document.querySelector(`#question-${question.question_id}`);
+            if (shortTextElement) {
+                selectedChoices[question.question_id] = shortTextElement.value.trim();
+            } else {
+                console.warn(`Textarea not found for Question ID ${question.question_id}`);
+            }
+        }
+    }
+
+    function submitSurvey() {
+        const responses = surveyQuestions.map(question => {
+            let response = {
+                question_id: question.question_id,
+                short_answer: '',
+                choice_id: null,
+            };
+
+            if (question.question_type === 'short_answer') {
+                response.short_answer = selectedChoices[question.question_id];
+
+            } else if (question.question_type === 'multiple_choice' || question.question_type === 'satisfaction' ||
+                question.question_type === 'relevance' || question.question_type === 'quality') {
+                response.choice_id = selectedChoices[question.question_id] || null;
+            }
+
+            return response;
+        });
+
+        fetch('/api/surveys/submit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({surveyId, responses}),
+        })
+            .then(response => response.json())
+            .then(data => {
+                const isSuccess = data.success === 'true' || data.success === true;
+
+                if (isSuccess) {
+                    notyf.success(data.message || 'Survey submitted successfully!');
+                } else {
+                    console.warn('Survey submission failed:', data.message);
+                    notyf.error(data.message || 'Failed to submit the survey.');
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting survey:', error);
+                notyf.error('An error occurred while submitting the survey. Please try again.');
+            });
+    }
+
+</script>
+<script src="../../node_modules/flyonui/flyonui.js"></script>
+
+</body>
+
+</html>
