@@ -34,7 +34,7 @@ Ensure the provided SQL file is imported into MySQL before running the applicati
 mysql -u root -p
 CREATE DATABASE exit_survey;
 USE exit_survey;
-SOURCE path/to/your/sqlfile.sql;
+SOURCE path/to/exit_survey.sql;
 
 ```
 ## Running the Application
