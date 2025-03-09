@@ -3,6 +3,10 @@
 ## About the Project
 The Exit Survey Program is a web-based application designed to collect feedback from graduating students through a structured questionnaire. The primary goal is to assess the achievement of program learning outcomes and gather insights for continuous improvement. The system consists of two main modules: the Student module, where graduates can complete the survey, and the Admin module, where administrators can manage and analyze responses.
 
+## Technologies Used
+- **Admin Side**: Built using PHP and Bootstrap for the interface.
+- **Student Side**: Developed with Node.js and Tailwind CSS, utilizing the ![FlyonUI](https://flyonui.com/) component library.
+
 ## Features
 
 ### Student Module
