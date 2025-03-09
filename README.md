@@ -5,7 +5,7 @@ The Exit Survey Program is a web-based application designed to collect feedback 
 
 ## Technologies Used
 - **Admin Side**: Built using PHP and Bootstrap for the interface.
-- **Student Side**: Developed with Node.js and Tailwind CSS, utilizing the ![FlyonUI](https://flyonui.com/) component library.
+- **Student Side**: Developed with Node.js and Tailwind CSS, utilizing the [FlyonUI](https://flyonui.com/) component library.
 
 ## Features
 
