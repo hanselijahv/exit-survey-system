@@ -73,7 +73,7 @@ Below are snapshots of the Exit Survey Program showcasing the Student and Admin 
 ## Contributors
 The following individuals contributed to the development of the Exit Survey Program:
 
-- **Matt Danielle Bravo**
+- **[Matt Danielle Bravo](https://www.linkedin.com/in/matt-danielle-bravo-b68372284/)**
 - **[Neil Angelo Briones](https://www.linkedin.com/in/neil-briones/)**
 - **[Rouxvick Dictag](https://www.linkedin.com/in/rouxvick-dictag-79b6bb346/)**
 - **Milton Junsel Fabe**
