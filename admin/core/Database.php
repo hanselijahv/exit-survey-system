@@ -6,9 +6,9 @@
 class Database
 {
 
-    private $servername = "localhost";
+    private $servername = "db-container";
     private $username = "root";
-    private $password = "";
+    private $password = "password";
     private $dbname = "exit_survey";
 
     public $conn;

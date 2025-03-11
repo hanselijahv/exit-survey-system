@@ -1,0 +1,51 @@
+services:
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.apache
+    container_name: admin-container
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    volumes:
+      - ./admin:/var/www/html
+    networks:
+      - app-network  # Ensure admin service is connected to app-network
+
+  student:
+    build:
+      context: ./student
+      dockerfile: Dockerfile.nodejs
+    container_name: student-container
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./student:/usr/src/app
+    networks:
+      - app-network  # Ensure student service is connected to app-network
+
+  db:
+    image: mysql:8.0
+    container_name: db-container
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: exit_survey
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin -uroot -ppassword ping | grep -q 'mysqld is alive' || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 7
+    networks:
+      - app-network  # Ensure db service is connected to app-network
+
+networks:
+  app-network:
+    driver: bridge  # Defines the custom bridge network for communication between containers

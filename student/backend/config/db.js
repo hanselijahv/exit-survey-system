@@ -2,10 +2,10 @@ import mysql from "mysql2";
 
 let connection;
 
-export const connectToDatabase = async () => {
+export const connectToDatabase = () => {
     if (!connection) {
         try {
-            connection = await mysql.createConnection({
+            connection = mysql.createConnection({
                 host: process.env.MYSQL_HOST,
                 user: process.env.MYSQL_USER,
                 password: process.env.MYSQL_PASSWORD,
@@ -20,10 +20,10 @@ export const connectToDatabase = async () => {
     return connection;
 };
 
-export const closeDatabaseConnection = async () => {
+export const closeDatabaseConnection = () => {
     if (connection) {
         try {
-            await connection.end();
+            connection.end();
             console.log("MySQL connection closed.");
         } catch (error) {
             console.error("Error closing MySQL connection:", error);
