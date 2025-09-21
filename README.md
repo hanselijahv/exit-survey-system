@@ -1,4 +1,4 @@
-# Exit Survey Program
+# Exit Survey Program (React)
 
 ## Table of Contents
 - [About the Project](#about-the-project)
@@ -22,7 +22,7 @@
 - [Contributors](#contributors)
 
 ## About the Project
-The Exit Survey Program is a web-based application designed to collect feedback from graduating students through a structured questionnaire. The primary goal is to assess the achievement of program learning outcomes and gather insights for continuous improvement. The system consists of two main modules: the Student module, where graduates can complete the survey, and the Admin module, where administrators can manage and analyze responses.
+The Exit Survey Program is a web-based application designed to collect feedback from graduating students through a structured questionnaire. The primary goal is to assess the achievement of program learning outcomes and gather insights for continuous improvement. The system consists of two main modules: the Student module, where graduates can complete the survey, and the Admin module, where administrators can manage and analyze responses. 
 
 ## Technologies Used
 - **Admin Side**: Built using PHP and Bootstrap for the interface.
